@@ -37,6 +37,7 @@ class _MovementPageState extends State<MovementPage>
   String? tongueShape;
 
 
+
   late VideoPlayerController _video;
   // ---------------- STEP ----------------
   int step = 1;
@@ -50,11 +51,8 @@ class _MovementPageState extends State<MovementPage>
   double gym = 30;
   double yoga = 20;
 
-  double stressSlider = 30;   // minutes / level
-  double sleepSlider = 7;     // hours
 
-  late TextEditingController stressController;
-  late TextEditingController sleepController;
+
 
   // ---------------- SPORTS ----------------
   double sports = 30;
@@ -89,6 +87,18 @@ class _MovementPageState extends State<MovementPage>
     'Throwball': Icons.sports_volleyball,
     'Volleyball': Icons.sports_volleyball,
   };
+// -------- WELLBEING (NEW) --------
+  double sleepHours = 7;
+  double meditationMinutes = 10;
+  double musicMinutes = 30;
+
+  String? moodToday;
+  String? hobbySkill;
+
+
+  late TextEditingController sleepController;
+  late TextEditingController meditationController;
+  late TextEditingController musicController;
 
 
   // ---------------- SUGAR ----------------
@@ -109,6 +119,11 @@ class _MovementPageState extends State<MovementPage>
   late TextEditingController diastolicController;
   late TextEditingController heartRateController;
   late TextEditingController hemoglobinController;
+
+  // Numeric inputs
+  final TextEditingController tshController = TextEditingController();
+  final TextEditingController cholesterolController = TextEditingController();
+
   // ---------------- VIDEO SELECTOR ----------------
   String get videoAsset {
     switch (step) {
@@ -145,8 +160,14 @@ class _MovementPageState extends State<MovementPage>
     gymController = TextEditingController(text: gym.round().toString());
     yogaController = TextEditingController(text: yoga.round().toString());
     sportsController = TextEditingController(text: sports.round().toString());
-    stressController = TextEditingController(text: stressSlider.round().toString());
-    sleepController  = TextEditingController(text: sleepSlider.round().toString());
+
+    sleepController =
+        TextEditingController(text: sleepHours.toStringAsFixed(1));
+    meditationController =
+        TextEditingController(text: meditationMinutes.round().toString());
+    musicController =
+        TextEditingController(text: musicMinutes.round().toString());
+
 
 
     _fadeController =
@@ -205,8 +226,12 @@ class _MovementPageState extends State<MovementPage>
     diastolicController.dispose();
     heartRateController.dispose();
     hemoglobinController.dispose();
-    stressController.dispose();
+
     sleepController.dispose();
+    sleepController.dispose();
+    meditationController.dispose();
+    musicController.dispose();
+
 
 
 
@@ -239,32 +264,67 @@ class _MovementPageState extends State<MovementPage>
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 24),
+                const SizedBox(height: 12),
 
-                Text(
-                  step == 1
-                      ? 'Tell us about your daily movement'
-                      : step == 2
-                      ? 'Tell us about your workouts'
-                      : step == 3
-                      ? 'Tell us about your sports activity'
-                      : step == 4
-                      ? 'Tell us about your sugar levels'
-                      : step == 5
-                      ? 'Tell us about your vital readings'
-                      : step == 6
-                      ? 'Tell us about your health conditions'
-                      : step == 7
-                       ? 'tell us about your diet'
-                       : step == 8
-                       ? 'Tell us about your wellbeing'
-                      : 'Tell us about your Tongue',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      // 🔙 BACK BUTTON
+                      if (step > 1)
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              step--;
+                            });
+                            loadVideoForStep();
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white24),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+
+                      const SizedBox(width: 12),
+
+                      // 📝 TITLE
+                      Expanded(
+                        child: Text(
+                          step == 1
+                              ? 'Tell us about your daily movement'
+                              : step == 2
+                              ? 'Tell us about your workouts'
+                              : step == 3
+                              ? 'Tell us about your sports activity'
+                              : step == 4
+                              ? 'Tell us about your sugar levels'
+                              : step == 5
+                              ? 'Tell us about your vital readings'
+                              : step == 6
+                              ? 'Tell us about your health conditions'
+                              : step == 7
+                              ? 'Tell us about your diet'
+                              : step == 8
+                              ? 'Tell us about your wellbeing'
+                              : 'Tell us about your tongue',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
                   ),
-                  textAlign: TextAlign.center,
                 ),
 
 
@@ -459,10 +519,6 @@ class _MovementPageState extends State<MovementPage>
         sportTotalCard(value: totalSportsTime),
     ];
   }
-
-
-
-
   Widget sportTotalCard({required double value}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -496,6 +552,107 @@ class _MovementPageState extends State<MovementPage>
       ),
     );
   }
+
+
+  Widget sportMinuteCard({
+    required String title,
+    required IconData icon,
+    required double value,
+    required ValueChanged<double> onChanged,
+  }) {
+    final controller = TextEditingController(
+      text: value.round().toString(),
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 🔹 TITLE ROW
+          Row(
+            children: [
+              Icon(icon, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // 🔹 SLIDER + EDIT CAPSULE
+          Row(
+            children: [
+              // SLIDER
+              Expanded(
+                child: Slider(
+                  min: 0,
+                  max: 60,
+                  divisions: 60,
+                  value: value,
+                  onChanged: (v) {
+                    onChanged(v);
+                  },
+                  activeColor: Colors.lightBlueAccent,
+                  inactiveColor: Colors.white24,
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // EDITABLE CAPSULE
+              Container(
+                width: 90,
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: Colors.lightBlueAccent.withOpacity(0.25),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Colors.lightBlueAccent),
+                ),
+                child: TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                    suffixText: ' min',
+                    suffixStyle: TextStyle(color: Colors.white70),
+                  ),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  onSubmitted: (text) {
+                    final parsed = double.tryParse(text) ?? value;
+                    final safeValue = parsed.clamp(0, 60).toDouble();
+                    onChanged(safeValue);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
   List<Widget> sugarQuestions() => [sugarLevelCard()];
 
   Widget sugarLevelCard() {
@@ -723,9 +880,6 @@ class _MovementPageState extends State<MovementPage>
   }
   List<Widget> conditionsQuestions() => [
 
-    // -------- SCREEN LEVEL TEXT --------
-
-
     const SizedBox(height: 8),
 
     const Text(
@@ -736,32 +890,40 @@ class _MovementPageState extends State<MovementPage>
 
     const SizedBox(height: 24),
 
-    // -------- THYROID --------
-    conditionCard(
-      title: 'Thyroid',
-      question: 'Have you ever been told you have a thyroid condition?',
-      value: thyroidAnswer,
-      onChanged: (v) => setState(() => thyroidAnswer = v),
+    // 🦋 THYROID
+    numericConditionCard(
+      icon: Icons.bubble_chart,
+      title: 'Thyroid (TSH)',
+      question: 'If available, enter your latest TSH value',
+      controller: tshController,
+      unit: 'mIU/L',
+      hint: '3.2',
+      helper: 'Typical range: 0.4 – 4.0 mIU/L',
     ),
 
-    // -------- CHOLESTEROL --------
-    conditionCard(
+    // ❤️ CHOLESTEROL
+    numericConditionCard(
+      icon: Icons.favorite,
       title: 'Cholesterol',
-      question: 'Have you ever had high cholesterol levels?',
-      value: cholesterolAnswer,
-      onChanged: (v) => setState(() => cholesterolAnswer = v),
+      question: 'Enter your total cholesterol level',
+      controller: cholesterolController,
+      unit: 'mg/dL',
+      hint: '185',
+      helper: 'Normal is usually below 200 mg/dL',
     ),
 
-    // -------- GASTRIC --------
-    conditionCard(
+    // 🍽 GASTRIC
+    choiceConditionCard(
+      icon: Icons.restaurant,
       title: 'Digestion / Gastric',
       question: 'Do you often experience acidity or stomach discomfort?',
       value: gastricAnswer,
       onChanged: (v) => setState(() => gastricAnswer = v),
     ),
 
-    // -------- PCOD --------
-    conditionCard(
+    // 🌸 PCOD
+    choiceConditionCard(
+      icon: Icons.female,
       title: 'PCOD / PCOS',
       question: 'Have you been diagnosed with PCOD or PCOS?',
       value: pcodAnswer,
@@ -769,7 +931,88 @@ class _MovementPageState extends State<MovementPage>
       helper: 'This applies only if relevant to you',
     ),
   ];
-  Widget conditionCard({
+
+  Widget numericConditionCard({
+    required IconData icon,
+    required String title,
+    required String question,
+    required TextEditingController controller,
+    required String unit,
+    required String hint,
+    String? helper,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 6),
+          Text(question, style: const TextStyle(color: Colors.white70)),
+          const SizedBox(height: 12),
+
+          Container(
+            height: 46,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: const TextStyle(color: Colors.white38),
+                suffixText: ' $unit',
+                suffixStyle: const TextStyle(color: Colors.white70),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+
+          if (helper != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              helper,
+              style: const TextStyle(
+                color: Colors.white54,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+  Widget choiceConditionCard({
+    required IconData icon,
     required String title,
     required String question,
     required String? value,
@@ -787,25 +1030,29 @@ class _MovementPageState extends State<MovementPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            children: [
+              Icon(icon, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
+
+          const SizedBox(height: 6),
           Text(question, style: const TextStyle(color: Colors.white70)),
 
           if (helper != null) ...[
             const SizedBox(height: 4),
             Text(
               helper,
-              style: const TextStyle(
-                color: Colors.white54,
-                fontSize: 12,
-              ),
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
             ),
           ],
 
@@ -824,7 +1071,6 @@ class _MovementPageState extends State<MovementPage>
       ),
     );
   }
-
   Widget choiceChip(
       String label,
       String? selected,
@@ -858,6 +1104,7 @@ class _MovementPageState extends State<MovementPage>
       ),
     );
   }
+
   List<Widget> dietQuestions() => [
 
 
@@ -874,8 +1121,8 @@ class _MovementPageState extends State<MovementPage>
       icon: Icons.restaurant,
       title: 'Food Quality',
       question:
-      'How would you describe the overall quality of your daily meals?',
-      options: const ['Poor', 'Average', 'Good', 'Excellent'],
+      'How would you describe the  quality of your food?',
+      options: const ['healthy', 'moderate', 'junk'],
       value: foodQuality,
       onChanged: (v) => setState(() => foodQuality = v),
     ),
@@ -895,7 +1142,7 @@ class _MovementPageState extends State<MovementPage>
       icon: Icons.timelapse,
       title: 'Fasting Habits',
       question: 'Do you practice fasting as part of your routine?',
-      options: const ['No', 'Occasionally', 'Yes'],
+      options: const ['regular', 'social','Occasionally', 'nil'],
       value: fastingHabit,
       onChanged: (v) => setState(() => fastingHabit = v),
     ),
@@ -905,7 +1152,7 @@ class _MovementPageState extends State<MovementPage>
       icon: Icons.local_bar,
       title: 'Alcohol Consumption',
       question: 'Do you consume alcohol?',
-      options: const ['No', 'Occasionally', 'Yes'],
+      options: const ['No',  'Yes'],
       value: alcoholHabit,
       onChanged: (v) => setState(() => alcoholHabit = v),
     ),
@@ -915,7 +1162,7 @@ class _MovementPageState extends State<MovementPage>
       icon: Icons.smoking_rooms,
       title: 'Smoking',
       question: 'Do you smoke or use tobacco products?',
-      options: const ['No', 'Occasionally', 'Yes'],
+      options: const ['No',  'Yes'],
       value: smokingHabit,
       onChanged: (v) => setState(() => smokingHabit = v),
     ),
@@ -999,104 +1246,100 @@ class _MovementPageState extends State<MovementPage>
     );
   }
   List<Widget> wellbeingQuestions() => [
-
-    const SizedBox(height: 8),
-
     const Text(
-      'This helps us understand how you feel day to day',
+      'This helps us understand your mental and emotional balance',
       style: TextStyle(color: Colors.white70),
       textAlign: TextAlign.center,
     ),
-
     const SizedBox(height: 24),
 
-    // ✅ ENERGY (options – SAME AS BEFORE)
-    wellbeingCard(
-      icon: Icons.battery_charging_full,
-      title: 'Energy Levels',
-      question: 'How would you describe your energy most days?',
-      options: const ['Very low', 'Low', 'Moderate', 'High'],
-      emojiMap: const {
-        'Very low': '😔',
-        'Low': '😐',
-        'Moderate': '🙂',
-        'High': '😄',
-      },
-      value: energyLevel,
-      onChanged: (v) => setState(() => energyLevel = v),
-    ),
-
-    // ✅ STRESS (SLIDER STYLE)
+    // 🛌 Sleep Hours
     activityCard(
-      title: 'Stress Level',
-      subtitle: 'How stressed do you feel most days?',
-      value: stressSlider,
-      max: 100,
-      unit: '%',
-      controller: stressController,
-      onChanged: (v) {
-        setState(() {
-          stressSlider = v;
-          stressController.text = v.round().toString();
-        });
-      },
-    ),
-
-    // ✅ SLEEP (SLIDER STYLE)
-    activityCard(
-      title: 'Sleep Quality',
-      subtitle: 'How many hours do you sleep on average?',
-      value: sleepSlider,
+      title: 'Hours of Sleep',
+      subtitle: 'On average, how many hours do you sleep each night?',
+      value: sleepHours,
       max: 12,
       unit: 'hrs',
       controller: sleepController,
       onChanged: (v) {
         setState(() {
-          sleepSlider = v;
-          sleepController.text = v.round().toString();
+          sleepHours = v;
+          sleepController.text = v.toStringAsFixed(1);
         });
       },
     ),
 
-    // ✅ MOOD (options – SAME)
-    wellbeingCard(
-      icon: Icons.mood,
-      title: 'Overall Mood',
-      question: 'How has your mood been lately?',
-      options: const ['Low', 'Neutral', 'Good', 'Very positive'],
-      emojiMap: const {
-        'Low': '😞',
-        'Neutral': '😐',
-        'Good': '🙂',
-        'Very positive': '😄',
+    // 🧘 Meditation
+    activityCard(
+      title: 'Meditation Time',
+      subtitle: 'How much time do you usually spend meditating?',
+      value: meditationMinutes,
+      max: 120,
+      unit: 'min',
+      controller: meditationController,
+      onChanged: (v) {
+        setState(() {
+          meditationMinutes = v;
+          meditationController.text = v.round().toString();
+        });
       },
-      value: moodLevel,
-      onChanged: (v) => setState(() => moodLevel = v),
     ),
 
-    // ✅ HOBBIES (options – SAME)
-    wellbeingCard(
-      icon: Icons.interests,
-      title: 'Hobbies & Skills',
-      question: 'How often do you spend time on hobbies you enjoy?',
-      options: const ['Rarely', 'Sometimes', 'Often', 'Very often'],
-      emojiMap: const {
-        'Rarely': '😕',
-        'Sometimes': '🙂',
-        'Often': '😄',
-        'Very often': '🤩',
+    // 🙂 Mood Today
+    optionCard(
+      icon: Icons.mood,
+      title: 'Your Mood Today',
+      question: 'How are you feeling emotionally today?',
+      options: const [
+        'Delighted',
+        'Happy',
+        'Normal',
+        'Sad',
+        'Heartbroken',
+      ],
+      value: moodToday,
+      onChanged: (v) => setState(() => moodToday = v),
+    ),
+
+    // 🎵 Music Therapy
+    activityCard(
+      title: 'Music Listening Time',
+      subtitle: 'How much time do you spend listening to music for relaxation?',
+      value: musicMinutes,
+      max: 180,
+      unit: 'min',
+      controller: musicController,
+      onChanged: (v) {
+        setState(() {
+          musicMinutes = v;
+          musicController.text = v.round().toString();
+        });
       },
-      value: hobbyLevel,
-      onChanged: (v) => setState(() => hobbyLevel = v),
+    ),
+
+    // 🎨 Hobby Skill Level
+    optionCard(
+      icon: Icons.interests,
+      title: 'Hobby Skill Level',
+      question:
+      'How would you describe your current level in your hobbies or skills?',
+      options: const [
+        'Exploring',
+        'Developing',
+        'Talented',
+        'Expert',
+      ],
+      value: hobbySkill,
+      onChanged: (v) => setState(() => hobbySkill = v),
     ),
   ];
 
-  Widget wellbeingCard({
+
+  Widget optionCard({
     required IconData icon,
     required String title,
     required String question,
     required List<String> options,
-    required Map<String, String> emojiMap,
     required String? value,
     required ValueChanged<String> onChanged,
   }) {
@@ -1111,7 +1354,6 @@ class _MovementPageState extends State<MovementPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔹 ICON + TITLE
           Row(
             children: [
               Icon(icon, color: Colors.white),
@@ -1126,46 +1368,21 @@ class _MovementPageState extends State<MovementPage>
               ),
             ],
           ),
-
           const SizedBox(height: 6),
-
-          // 🔹 QUESTION
           Text(question, style: const TextStyle(color: Colors.white70)),
-
           const SizedBox(height: 14),
 
-          // 🔹 EMOJI (ONLY AFTER SELECTION)
-          if (value != null)
-            AnimatedSlide(
-              offset: const Offset(0, -0.15),
-              duration: const Duration(milliseconds: 300),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: 1,
-                child: Text(
-                  emojiMap[value] ?? '',
-                  style: const TextStyle(fontSize: 36),
-                ),
-              ),
-            ),
-
-          const SizedBox(height: 12),
-
-          // 🔹 OPTIONS
           Wrap(
             spacing: 10,
             runSpacing: 10,
             children: options.map((o) {
-              final bool selected = value == o;
-
+              final selected = value == o;
               return GestureDetector(
                 onTap: () => onChanged(o),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: selected
                         ? Colors.lightBlueAccent.withOpacity(0.35)
@@ -1193,6 +1410,7 @@ class _MovementPageState extends State<MovementPage>
       ),
     );
   }
+
   List<Widget> tongueQuestions() => [
 
     const SizedBox(height: 8),
@@ -1212,7 +1430,7 @@ class _MovementPageState extends State<MovementPage>
       icon: Icons.face,
       title: 'Tongue Color',
       question: 'How does your tongue usually look?',
-      options: const ['Pink', 'Pale', 'Red', 'Yellowish', 'Whitish'],
+      options: const ['Pink', 'Pale', 'Red', 'deepred', 'purple','blue'],
       value: tongueColor,
       onChanged: (v) => setState(() => tongueColor = v),
     ),
@@ -1222,7 +1440,7 @@ class _MovementPageState extends State<MovementPage>
       icon: Icons.cleaning_services,
       title: 'Tongue Coating',
       question: 'Do you notice any coating on your tongue?',
-      options: const ['None', 'Thin white', 'Thick white', 'Yellow'],
+      options: const ['None', 'Thin white', 'Thick white', 'Yellow','greasy','peeled'],
       value: tongueCoating,
       onChanged: (v) => setState(() => tongueCoating = v),
     ),
@@ -1232,7 +1450,7 @@ class _MovementPageState extends State<MovementPage>
       icon: Icons.water_drop,
       title: 'Moisture',
       question: 'Does your tongue feel dry?',
-      options: const ['No', 'Sometimes', 'Often'],
+      options: const ['dry', 'Slightlydry', 'normal','moist','excessively wet'],
       value: tongueMoisture,
       onChanged: (v) => setState(() => tongueMoisture = v),
     ),
@@ -1242,7 +1460,7 @@ class _MovementPageState extends State<MovementPage>
       icon: Icons.broken_image_outlined,
       title: 'Cracks',
       question: 'Do you notice any cracks on your tongue?',
-      options: const ['None', 'Mild', 'Deep'],
+      options: const ['None', 'Mild', 'moderate','Deep','horizontal','vertical'],
       value: tongueCracks,
       onChanged: (v) => setState(() => tongueCracks = v),
     ),
@@ -1252,7 +1470,7 @@ class _MovementPageState extends State<MovementPage>
       icon: Icons.crop_free,
       title: 'Tongue Shape',
       question: 'How would you describe the shape of your tongue?',
-      options: const ['Normal', 'Swollen', 'Thin', 'Scalloped'],
+      options: const ['Normal', 'Swollen', 'Thin', 'Scalloped','stiff','flabby'],
       value: tongueShape,
       onChanged: (v) => setState(() => tongueShape = v),
     ),
@@ -1332,59 +1550,7 @@ class _MovementPageState extends State<MovementPage>
       ),
     );
   }
-  Widget sportMinuteCard({
-    required String title,
-    required IconData icon,
-    required double value,
-    required ValueChanged<double> onChanged,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: Colors.white),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${value.round()} min',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Slider(
-            min: 0,
-            max: 60,
-            divisions: 60,
-            value: value,
-            onChanged: onChanged,
-            activeColor: Colors.lightBlueAccent,
-            inactiveColor: Colors.white24,
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget activityCard({
     required String title,
